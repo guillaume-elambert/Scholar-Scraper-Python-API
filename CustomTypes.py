@@ -154,8 +154,6 @@ class SimplifiedAuthor(SimplifiedCoauthor):
         if 'coauthors' in author and isinstance(author['coauthors'], list):
             self.coauthors = [SimplifiedCoauthor(coauthor) for coauthor in author['coauthors']]
 
-        return
-
     def __str__(self):
         """
         Simple string representation of the object.

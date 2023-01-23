@@ -25,4 +25,4 @@ for scholarId in sys.argv[1:]:
     finally:
         pass
 
-print(json.dumps(authorsList, cls=JSONEncoder, sort_keys=True, indent=4))
+print(json.dumps(authorsList, cls=JSONEncoder, sort_keys=True, indent=4, ensure_ascii=False))
