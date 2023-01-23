@@ -26,7 +26,11 @@ class JSONEncoder(JSONEncoder):
         :param o: The object to serialize
         :return: The object's dictionary
         """
-        if hasattr(o, '__dict__'):
-            return {k: v for k, v in o.__dict__.items() if k in getObjectPublicAttributes(o)}
+        if not hasattr(o, '__dict__'):
+            return JSONEncoder.default(self, o)
 
-        return JSONEncoder.default(self, o)
+        if hasattr(o, '_class_attributes'):
+            return {k: v for k, v in o.__dict__.items() if k in o._class_attributes}
+
+        return {k: v for k, v in o.__dict__.items() if k in getObjectPublicAttributes(o)}
+

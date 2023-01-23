@@ -9,7 +9,7 @@ from utilities import getObjectPublicAttributes
 
 class SimplifiedPublication:
     """
-    :class:`Publication <Publication>` object used to represent a simplified publication entry on Google Scholar.
+    :class:`SimplifiedPublication <SimplifiedPublication>` object used to represent a simplified publication entry on Google Scholar.
     """
 
     author_id: List[str] = None
@@ -40,12 +40,7 @@ class SimplifiedPublication:
     """List of all the public attributes of the class."""
 
     def __init__(self, publication: Publication):
-        # Get all the attributes of the class
-        # self._class_attributes = [attr for attr in dir(self.__class__) if
-        #                not callable(getattr(self.__class__, attr))
-        #                and not attr.startswith("__")
-        #                and not attr.startswith("_")
-        #                and not attr.startswith("_" + self.__class__.__name__ + "__")]
+        # Get all the public attributes of the class
         self._class_attributes = getObjectPublicAttributes(self)
 
         if publication['container_type'] != "Publication":
@@ -55,8 +50,9 @@ class SimplifiedPublication:
             scholarly.fill(publication)
 
         # Copy all the needed attributes to the object
-        for key in self._class_attributes:
-            self.__dict__[key] = publication[key] if key in publication else None
+        for attribute in self._class_attributes:
+            if attribute in publication:
+                self.__dict__[attribute] = publication[attribute]
 
     def __str__(self):
         """
@@ -66,9 +62,9 @@ class SimplifiedPublication:
         return str(self.__dict__)
 
 
-class SimplifiedAuthor:
+class SimplifiedCoauthor:
     """
-    :class:`Author <Author>` object used to represent a simplified author entry on Google Scholar.
+    :class:`SimplifiedCoauthor <SimplifiedCoauthor>` object used to represent a simplified coauthor entry on Google Scholar.
     """
 
     scholar_id: str = None
@@ -79,6 +75,34 @@ class SimplifiedAuthor:
 
     affiliation: str = None
     """The affiliation of the author."""
+
+    _class_attributes: List[str] = None
+    """List of all the public attributes of the class."""
+
+    def __init__(self, coauthor: dict):
+        # Get all the public attributes of the class
+        self._class_attributes = getObjectPublicAttributes(self)
+
+        if coauthor['container_type'] != "Author":
+            raise ValueError("The given object is not an Author object.")
+
+        # Copy all the needed attributes to the object
+        for attribute in self._class_attributes:
+            if attribute in coauthor:
+                self.__dict__[attribute] = coauthor[attribute]
+
+    def __str__(self):
+        """
+        Simple string representation of the object.
+        :return: The string representation of the object
+        """
+        return str(self.__dict__)
+
+
+class SimplifiedAuthor(SimplifiedCoauthor):
+    """
+    :class:`SimplifiedAuthor <SimplifiedAuthor>` object used to represent a simplified author entry on Google Scholar.
+    """
 
     organization: int = None
     """A unique ID of the organization. (source: AUTHOR_PROFILE_PAGE)"""
@@ -98,20 +122,12 @@ class SimplifiedAuthor:
     publications: List[SimplifiedPublication] = None
     """A list of publications objects. (source: SEARCH_AUTHOR_SNIPPETS)"""
 
-    coauthors: List = None  # List of authors. No self dict functionality available
+    coauthors: List[SimplifiedCoauthor] = None  # List of authors. No self dict functionality available
     """A list of coauthors (list of Author objects). (source: SEARCH_AUTHOR_SNIPPETS)"""
 
-    _class_attributes: List[str] = None
-    """List of all the public attributes of the class."""
-
     def __init__(self, author: Author = None):
-        # Get all the attributes of the class
-        # self._class_attributes = [attr for attr in dir(self.__class__) if
-        #                not callable(getattr(self.__class__, attr))
-        #                and not attr.startswith("__")
-        #                and not attr.startswith("_")
-        #                and not attr.startswith("_" + self.__class__.__name__ + "__")]
-        self._class_attributes = getObjectPublicAttributes(self)
+        # Call super constructor
+        super().__init__(author)
 
         if author['container_type'] != "Author":
             raise ValueError("The given object is not an Author object.")
@@ -119,19 +135,26 @@ class SimplifiedAuthor:
         if len(author['filled']) != len(AuthorParser(None)._sections):
             scholarly.fill(author)
 
-        # Remove the key 'publications' from the list of attributes, since it is a list of SimplifiedPublication objects
-        # Make sure the original list is not modified (cannot directly copy it since it is a class variable)
-        attributes_to_use = self._class_attributes
-        self._class_attributes = attributes_to_use.copy()
+        # Remove the attributes 'publications' and 'coauthors' from the list, since they are lists of
+        # SimplifiedPublication and SimplifiedCoauthor objects. Make sure the original list is not modified.
+        attributes_to_use = self._class_attributes.copy()
         attributes_to_use.remove('publications')
+        attributes_to_use.remove('coauthors')
 
         # Copy all the needed attributes to the object
-        for key in attributes_to_use:
-            self.__dict__[key] = author[key] if key in author else None
+        for attribute in attributes_to_use:
+            if attribute in author:
+                self.__dict__[attribute] = author[attribute]
 
         # Casting the publications to SimplifiedPublication objects if they exist and are of type list
         if 'publications' in author and isinstance(author['publications'], list):
             self.publications = [SimplifiedPublication(pub) for pub in author['publications']]
+
+        # Casting the coauthors to SimplifiedCoauthor objects if they exist and are of type list
+        if 'coauthors' in author and isinstance(author['coauthors'], list):
+            self.coauthors = [SimplifiedCoauthor(coauthor) for coauthor in author['coauthors']]
+
+        return
 
     def __str__(self):
         """
