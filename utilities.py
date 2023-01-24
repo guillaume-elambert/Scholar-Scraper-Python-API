@@ -33,4 +33,3 @@ class JSONEncoder(JSONEncoder):
             return {k: v for k, v in o.__dict__.items() if k in o._class_attributes}
 
         return {k: v for k, v in o.__dict__.items() if k in getObjectPublicAttributes(o)}
-

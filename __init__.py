@@ -6,7 +6,7 @@ from typing import List
 
 from scholarly import scholarly
 
-from CustomTypes import SimplifiedAuthor
+from CustomScholarlyTypes import SimplifiedAuthor
 from utilities import JSONEncoder
 
 
@@ -27,6 +27,12 @@ def getAuthorData(scholarId: str):
 
 # Threaded function for queue processing.
 def crawl(queue: Queue, results: List):
+    """
+    Crawl the author's data from Google Scholar.
+    :param queue: The queue to fetch the work from.
+    :param results: The list to append the results to.
+    :return: Always true.
+    """
     while not queue.empty():
         # Fetch new work from the Queue
         work = queue.get()
@@ -63,8 +69,7 @@ if __name__ == '__main__':
     for index_id, scholarId in enumerate(scholarIds):
         queue.put((index_id, scholarId))
 
-
-    #Starting worker threads on queue processing
+    # Starting worker threads on queue processing
     for i in range(num_theads):
         worker = Thread(target=crawl, args=(queue, authorsList))
         worker.start()
