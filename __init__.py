@@ -49,6 +49,9 @@ def crawl(queue: Queue, results: List):
 
 
 if __name__ == '__main__':
+    """
+    Main function.
+    """
 
     # Check that there is a least one parameter
     if len(sys.argv) < 2:
