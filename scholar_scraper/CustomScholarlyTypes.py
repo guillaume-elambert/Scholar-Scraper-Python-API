@@ -4,7 +4,7 @@ from scholarly import scholarly
 from scholarly.author_parser import AuthorParser
 from scholarly.data_types import Author, Publication, CitesPerYear
 
-from utilities import getObjectPublicAttributes
+from .utilities import getObjectPublicAttributes
 
 
 class SimplifiedPublication:
@@ -118,7 +118,6 @@ class SimplifiedPublication:
             for attribute in bib_attributes:
                 if attribute in self._class_attributes:
                     self.__dict__[attribute] = publication['bib'][attribute]
-
 
     def __str__(self):
         """
