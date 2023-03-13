@@ -1,6 +1,5 @@
 import json
-from queue import Queue
-from threading import Thread
+from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 from scholarly import scholarly
@@ -25,26 +24,18 @@ def getAuthorData(scholarId: str):
 
 
 # Threaded function for queue processing.
-def crawl(queue: Queue, results: List):
+def crawl(work: tuple):
     """
     Crawl the author's data from Google Scholar.
-    :param queue: The queue to fetch the work from.
-    :param results: The list to append the results to.
-    :return: Always true.
+    :param work: A tuple containing the index and scholarId of the author to fetch.
+    :return: The author's data or None if an error occurred.
     """
-    while not queue.empty():
-        # Fetch new work from the Queue
-        work = queue.get()
-
-        try:
-            data = getAuthorData(work[1])
-            results.append(data)
-        except:
-            pass
-
-        # Signal to the queue that task has been processed
-        queue.task_done()
-    return True
+    data = None
+    try:
+        data = getAuthorData(work[1])
+    finally:
+        return data
+        pass
 
 
 class ScholarScraper:
@@ -57,6 +48,7 @@ class ScholarScraper:
         :param scholarIds: The list of the ids of the authors on Google Scholar.
         :param max_threads: The maximum number of threads to use for the scraping process.
         """
+
         self.scholarIds = scholarIds
         self.max_threads = max_threads
         self.authorsList = []
@@ -74,22 +66,19 @@ class ScholarScraper:
         self.scholarIds = scholarIds if scholarIds else self.scholarIds
         self.max_threads = max_threads if max_threads else self.max_threads
 
-        # Initialize an infinite queue
-        queue = Queue(maxsize=0)
-
         # Use many threads (self.max_threads max, or one for each scholarId)
-        num_theads = min(self.max_threads, len(self.scholarIds))
+        num_threads = min(self.max_threads, len(self.scholarIds))
 
-        # Iterate over all the scholarIds using index
-        for index_id, scholarId in enumerate(self.scholarIds):
-            queue.put((index_id, scholarId))
+        # Initialize a thread pool executor
+        with ThreadPoolExecutor(max_workers=num_threads) as executor:
+            # Create a list of tuples containing the index and scholarId of each author to fetch
+            works = [(index_id, scholarId) for index_id, scholarId in enumerate(self.scholarIds)]
 
-        # Starting worker threads on queue processing
-        for i in range(num_theads):
-            worker = Thread(target=crawl, args=(queue, self.authorsList))
-            worker.start()
+            # Submit the crawl function to the thread pool executor with each work item
+            futures = [executor.submit(crawl, work) for work in works]
 
-        # Now we wait until the queue has been processed
-        queue.join()
+            # Retrieve the results of each crawl function
+            results = [future.result() for future in futures if future.result() is not None]
 
+        self.authorsList.extend(results)
         return json.dumps(self.authorsList, cls=JSONEncoder, sort_keys=True, indent=4, ensure_ascii=False)
