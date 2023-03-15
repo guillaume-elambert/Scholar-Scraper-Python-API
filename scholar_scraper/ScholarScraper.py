@@ -24,15 +24,15 @@ def getAuthorData(scholarId: str):
 
 
 # Threaded function for queue processing.
-def crawl(work: tuple):
+def crawl(scholarID: str):
     """
     Crawl the author's data from Google Scholar.
-    :param work: A tuple containing the index and scholarId of the author to fetch.
+    :param scholarID: A Google Scholar ID string.
     :return: The author's data or None if an error occurred.
     """
     data = None
     try:
-        data = getAuthorData(work[1])
+        data = getAuthorData(scholarID)
     finally:
         return data
         pass
@@ -71,11 +71,9 @@ class ScholarScraper:
 
         # Initialize a thread pool executor
         with ThreadPoolExecutor(max_workers=num_threads) as executor:
-            # Create a list of tuples containing the index and scholarId of each author to fetch
-            works = [(index_id, scholarId) for index_id, scholarId in enumerate(self.scholarIds)]
 
             # Submit the crawl function to the thread pool executor with each work item
-            futures = [executor.submit(crawl, work) for work in works]
+            futures = [executor.submit(crawl, work) for work in self.scholarIds]
 
             # Retrieve the results of each crawl function
             results = [future.result() for future in futures if future.result() is not None]
