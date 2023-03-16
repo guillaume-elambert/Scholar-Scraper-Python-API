@@ -10,7 +10,13 @@ library.
 
 ## Installation
 
-The script can be installed through `pip`:
+The script can be installed through `pip` and PyPI:
+
+```bash
+pip install scholar-scraper
+```
+
+Or via Github sources:
 
 ```bash
 pip install git+https://github.com/guillaume-elambert/Scholar-Scraper-Python-API.git

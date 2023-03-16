@@ -2,10 +2,29 @@ import json
 from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
-from scholarly import scholarly
+from scholarly import scholarly, ProxyGenerator
 
 from .CustomScholarlyTypes import SimplifiedAuthor
 from .utilities import JSONEncoder
+
+
+def set_new_proxy():
+    """
+    Set a new proxy for the scholarly library.
+    :return: The new proxy.
+    """
+
+    pg = ProxyGenerator()
+    iter = 0
+
+    while iter < 10:
+        if pg.FreeProxies() and scholarly.use_proxy(pg):
+            break
+        iter += 1
+    return pg
+
+
+set_new_proxy()
 
 
 def getAuthorData(scholarId: str):
@@ -18,9 +37,7 @@ def getAuthorData(scholarId: str):
     author = scholarly.search_author_id(scholarId)
 
     # Cast the author to Author object
-    newauthor = SimplifiedAuthor(author)
-
-    return newauthor
+    return SimplifiedAuthor(author)
 
 
 # Threaded function for queue processing.
@@ -31,11 +48,16 @@ def crawl(scholarID: str):
     :return: The author's data or None if an error occurred.
     """
     data = None
-    try:
-        data = getAuthorData(scholarID)
-    finally:
-        return data
-        pass
+    iter = 0
+    while iter < 10:
+        try:
+            data = getAuthorData(scholarID)
+            return data
+        except Exception as e:
+            set_new_proxy()
+            iter += 1
+
+    return data
 
 
 class ScholarScraper:
@@ -76,7 +98,8 @@ class ScholarScraper:
             futures = [executor.submit(crawl, work) for work in self.scholarIds]
 
             # Retrieve the results of each crawl function
-            results = [future.result() for future in futures if future.result() is not None]
+            for future in futures:
+                if future.result() is not None:
+                    self.authorsList.append(future.result())
 
-        self.authorsList.extend(results)
-        return json.dumps(self.authorsList, cls=JSONEncoder, sort_keys=True, indent=4, ensure_ascii=False)
+            return json.dumps(self.authorsList, cls=JSONEncoder, sort_keys=True, indent=4, ensure_ascii=False)
