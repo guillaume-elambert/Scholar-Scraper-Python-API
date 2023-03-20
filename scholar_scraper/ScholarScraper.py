@@ -24,9 +24,6 @@ def set_new_proxy():
     return pg
 
 
-set_new_proxy()
-
-
 def getAuthorData(scholarId: str):
     """
     Retrieve the author's data from Google Scholar.
@@ -87,6 +84,11 @@ class ScholarScraper:
         self.threads = []
         self.scholarIds = scholarIds if scholarIds else self.scholarIds
         self.max_threads = max_threads if max_threads else self.max_threads
+
+        if self.max_threads == 1:
+            for scholarId in self.scholarIds:
+                self.authorsList.append(getAuthorData(scholarId))
+            return json.dumps(self.authorsList, cls=JSONEncoder, sort_keys=True, indent=4, ensure_ascii=False)
 
         # Use many threads (self.max_threads max, or one for each scholarId)
         num_threads = min(self.max_threads, len(self.scholarIds))
