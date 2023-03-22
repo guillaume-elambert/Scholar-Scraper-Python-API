@@ -46,13 +46,13 @@ def crawl(scholarID: str):
     """
     data = None
     iter = 0
-    while iter < 10:
+    while iter < 10 and data is None:
         try:
             data = getAuthorData(scholarID)
-            return data
-        except Exception as e:
+        except:
             set_new_proxy()
             iter += 1
+            data = None
 
     return data
 

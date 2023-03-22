@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='scholar-scraper',
-    version='1.0.8',
+    version='1.0.9',
     description='A python API to get publications from specific users on Google Scholar.',
     long_description_content_type="text/markdown",
     long_description=open('README.md').read(),
