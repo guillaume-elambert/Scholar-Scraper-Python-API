@@ -21,6 +21,7 @@ def set_new_proxy():
         if pg.FreeProxies() and scholarly.use_proxy(pg):
             break
         iter += 1
+    print(pg.get_session())
     return pg
 
 
@@ -46,13 +47,16 @@ def crawl(scholarID: str):
     """
     data = None
     iter = 0
-    while iter < 10 and data is None:
+
+    # Try to get the data 10 times at most
+    while iter < 10:
         try:
-            data = getAuthorData(scholarID)
+            return getAuthorData(scholarID)
+        # If an error occurred, try again with a new proxy
         except:
             set_new_proxy()
             iter += 1
-            data = None
+            raise
 
     return data
 
