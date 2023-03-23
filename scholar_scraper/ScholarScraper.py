@@ -7,6 +7,8 @@ from scholarly import scholarly, ProxyGenerator
 from .CustomScholarlyTypes import SimplifiedAuthor
 from .utilities import JSONEncoder
 
+MAX_RETRIES = 10
+
 
 def set_new_proxy():
     """
@@ -15,13 +17,13 @@ def set_new_proxy():
     """
 
     pg = ProxyGenerator()
-    iter = 0
 
-    while iter < 10:
-        if pg.FreeProxies() and scholarly.use_proxy(pg):
-            break
-        iter += 1
-    print(pg.get_session())
+    for i in range(MAX_RETRIES):
+        try:
+            if pg.FreeProxies() and scholarly.use_proxy(pg):
+                break
+        except:
+            pass
     return pg
 
 
@@ -46,17 +48,15 @@ def crawl(scholarID: str):
     :return: The author's data or None if an error occurred.
     """
     data = None
-    iter = 0
 
     # Try to get the data 10 times at most
-    while iter < 10:
+    for i in range(MAX_RETRIES):
         try:
-            return getAuthorData(scholarID)
+            data = getAuthorData(scholarID)
+            break
         # If an error occurred, try again with a new proxy
         except:
             set_new_proxy()
-            iter += 1
-            raise
 
     return data
 
@@ -91,7 +91,7 @@ class ScholarScraper:
 
         if self.max_threads == 1:
             for scholarId in self.scholarIds:
-                self.authorsList.append(getAuthorData(scholarId))
+                self.authorsList.append(crawl(scholarId))
             return json.dumps(self.authorsList, cls=JSONEncoder, sort_keys=True, indent=4, ensure_ascii=False)
 
         # Use many threads (self.max_threads max, or one for each scholarId)
